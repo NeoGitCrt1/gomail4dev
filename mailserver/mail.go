@@ -43,8 +43,8 @@ func Serve() {
 
 }
 func mailHandler(origin net.Addr, from string, to []string, data []byte) error {
-	stmt, err := dblink.Db().Prepare("INSERT INTO Messages ( id, [from], [to], receivedDate, subject, data, mimeParseError, sessionId, attachmentCount, isUnread ) values (?,?,?,?,?,?,?,?,?,?)")
-	msg, attachmentCount , mimeParseError := readMsg(bytes.NewReader(data))
+	stmt, err := dblink.Db().Prepare("INSERT INTO Message ( id, [from], [to], receivedDate, subject, data, mimeParseError, sessionId, attachmentCount, isUnread ) values (?,?,?,?,?,?,?,?,?,?)")
+	msg, attachmentCount, mimeParseError := readMsg(bytes.NewReader(data))
 	_, err = stmt.Exec(strconv.FormatUint(snowflake.ID(), 10), from, strings.Join(to, ","), time.Now(),
 		msg.Header.Get("Subject"),
 		data, mimeParseError, "", attachmentCount, 0,

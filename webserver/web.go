@@ -24,7 +24,7 @@ func Serve() {
 	api := router.Group("/api")
 	{
 		api.GET("/Messages", func(c *gin.Context) {
-			r, err := dblink.Db().Query("select id, [from], [to], receivedDate, subject from Messages")
+			r, err := dblink.Db().Query("select id, [from], [to], receivedDate, subject from Message")
 			if err != nil {
 				c.String(http.StatusInternalServerError, err.Error())
 				return
@@ -35,13 +35,13 @@ func Serve() {
 		api.DELETE("/Messages/:id", func(c *gin.Context) {
 			id := c.Param("id")
 			if id == "*" {
-				dblink.Db().Exec("delete from Messages", id)
+				dblink.Db().Exec("delete from Message", id)
 			} else {
-				dblink.Db().Exec("delete from Messages where id=?", id)
+				dblink.Db().Exec("delete from Message where id=?", id)
 			}
 		})
 		api.GET("/Messages/:id", func(c *gin.Context) {
-			r := dblink.Db().QueryRow("select [from], receivedDate, data from Messages where id=?", c.Param("id"))
+			r := dblink.Db().QueryRow("select [from], receivedDate, data from Message where id=?", c.Param("id"))
 			var recv string
 			var from string
 			b := make([]byte, 0)
@@ -59,7 +59,7 @@ func Serve() {
 
 			head := make([]kv, 0)
 			for k := range msg.Header {
-				head = append(head, kv{k, msg.Header[k][0] })
+				head = append(head, kv{k, msg.Header[k][0]})
 			}
 
 			c.JSON(http.StatusOK, gin.H{"headers": head,
@@ -72,7 +72,7 @@ func Serve() {
 			})
 		})
 		api.GET("/Messages/:id/html", func(c *gin.Context) {
-			r := dblink.Db().QueryRow("select data from Messages where id=?", c.Param("id"))
+			r := dblink.Db().QueryRow("select data from Message where id=?", c.Param("id"))
 			b := make([]byte, 0)
 			err := r.Scan(&b)
 			if err != nil {
@@ -85,7 +85,7 @@ func Serve() {
 
 		})
 		api.GET("/Messages/:id/raw", func(c *gin.Context) {
-			r := dblink.Db().QueryRow("select data from Messages where id=?", c.Param("id"))
+			r := dblink.Db().QueryRow("select data from Message where id=?", c.Param("id"))
 			b := make([]byte, 0)
 			err := r.Scan(&b)
 			if err != nil {
@@ -101,7 +101,7 @@ func Serve() {
 
 		})
 		api.GET("/Messages/:id/download", func(c *gin.Context) {
-			r := dblink.Db().QueryRow("select data from Messages where id=?", c.Param("id"))
+			r := dblink.Db().QueryRow("select data from Message where id=?", c.Param("id"))
 			b := make([]byte, 0)
 			err := r.Scan(&b)
 			if err != nil {
@@ -130,6 +130,6 @@ func Serve() {
 }
 
 type kv struct {
-	Name string `json:"name"`
+	Name  string `json:"name"`
 	Value string `json:"value"`
 }
