@@ -2,6 +2,7 @@ package webserver
 
 import (
 	"bytes"
+	"flag"
 	"net/http"
 	"strconv"
 	"strings"
@@ -20,14 +21,18 @@ type ServerOptions struct {
 
 var opt *ServerOptions
 
+var b = flag.String("base_path", "/", "base url part")
+var wPort = flag.Int("web_port", 5000, "web site port")
+
 func init() {
 	opt = &ServerOptions{
-		"",
-		5000,
+		*b,
+		*wPort,
 	}
 }
 
 func Serve() {
+	gin.SetMode(gin.ReleaseMode)
 	router := gin.Default()
 
 	static := router.Group((*opt).BasePath + "/")
@@ -59,7 +64,7 @@ func Serve() {
 			}
 		})
 		api.GET("/Messages/:id", func(c *gin.Context) {
-			id := c.Param("id") 
+			id := c.Param("id")
 			r := dblink.Db().QueryRow("select [from], receivedDate, data from Message where id=?", id)
 			dblink.Db().Exec("update Message set isUnread = 0 where id=? and isUnread = 1", id)
 			var recv string

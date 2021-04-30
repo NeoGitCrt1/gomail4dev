@@ -2,16 +2,17 @@ package dblink
 
 import (
 	"database/sql"
-	"fmt"
+	"flag"
 
 	_ "github.com/mattn/go-sqlite3"
 )
 
 var dbholder *sql.DB
 
+var dbData = flag.String("data_path", "./data.db", "data file path")
+
 func init() {
-	fmt.Println("open sqllite:")
-	db, err := sql.Open("sqlite3", "./data.db")
+	db, err := sql.Open("sqlite3", *dbData)
 	if err != nil {
 		panic(err)
 	}
@@ -20,7 +21,7 @@ func init() {
 	db.Exec("insert into Message ( id , [from] , [to] , receivedDate , subject , data , mimeParseError , sessionId , attachmentCount , isUnread ) SELECT Id, [From], [To], ReceivedDate, Subject, Data, MimeParseError, SessionId, AttachmentCount, IsUnread FROM Messages;")
 	db.Exec("drop table Messages;")
 	db.Exec("CREATE TRIGGER trg_when_max AFTER INSERT ON Message BEGIN delete from Message where id not in (select id from Message order by receivedDate desc limit 1000 ) ; END;")
-	
+
 	db.SetMaxOpenConns(20)
 	dbholder = db
 }

@@ -1,6 +1,7 @@
 package mailserver
 
 import (
+	"flag"
 	"fmt"
 	"net"
 	"strconv"
@@ -27,20 +28,22 @@ var ServerOptions *ServerRelayOptions
 func init() {
 	ServerOptions = &ServerRelayOptions{
 		SmtpServer: "localhost",
-		SmtpPort:   25,
+		SmtpPort:   *mPort,
 	}
 }
 
+var mPort = flag.Int("smtp_port", 25, "smtp server port")
+
 func Serve() {
 	fmt.Println("start mail tcp:")
-	smtpd.ListenAndServe(":25", mailHandler, "gomail", "")
+	smtpd.ListenAndServe(":" + strconv.Itoa(*mPort), mailHandler, "gomail", "")
 }
 func mailHandler(origin net.Addr, from string, to []string, data []byte) error {
 	stmt, err := dblink.Db().Prepare("INSERT INTO Message ( id, [from], [to], subject,receivedDate, data, isUnread, mimeParseError, attachmentCount ) values (?,?,?,?,?,?,?,?,?)")
-	m, err:= mailparse.ReadMailFromRaw(&data)
-	aCnt  := 0
+	m, err := mailparse.ReadMailFromRaw(&data)
+	aCnt := 0
 	mimeParseError := ""
-	if (err != nil) {
+	if err != nil {
 		mimeParseError = err.Error()
 	}
 	aCnt = len(*m.Parts) - 1
