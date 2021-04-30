@@ -55,9 +55,11 @@ func mailHandler(origin net.Addr, from string, to []string, data []byte) error {
 		aCnt,
 	)
 	stmt.Close()
+	// not for high traffic scenario
 	c := atomic.AddUint32(&count, 1)
 	if (c > 10) {
 		atomic.StoreUint32(&count, 0)
+		// I konw this delete sucks. I have old data with UUID as id, so I have to do this in this way
 		dblink.Db.Exec("delete from Message where id not in (select id from Message order by receivedDate desc limit 1000 )")
 	}
 	
