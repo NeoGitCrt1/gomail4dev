@@ -24,13 +24,14 @@ var BasePath string
 var WPort int
 
 func init() {
+	
+}
+
+func Serve() {
 	opt = &ServerOptions{
 		BasePath,
 		WPort,
 	}
-}
-
-func Serve() {
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.Default()
 

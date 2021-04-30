@@ -4,6 +4,7 @@ import (
 	"net"
 	"strconv"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	"github.com/NeoGitCrt1/go-snowflake"
@@ -24,17 +25,21 @@ type ServerRelayOptions struct {
 var ServerOptions *ServerRelayOptions
 
 func init() {
-	ServerOptions = &ServerRelayOptions{
-		SmtpServer: "localhost",
-		SmtpPort:   MPort,
-	}
+	
 }
 
 var MPort int
 
 func Serve() {
+	ServerOptions = &ServerRelayOptions{
+		SmtpServer: "localhost",
+		SmtpPort:   MPort,
+	}
 	smtpd.ListenAndServe(":"+strconv.Itoa(MPort), mailHandler, "gomail", "")
 }
+
+var count uint32
+
 func mailHandler(origin net.Addr, from string, to []string, data []byte) error {
 	stmt, err := dblink.Db.Prepare("INSERT INTO Message ( id, [from], [to], subject,receivedDate, data, isUnread, mimeParseError, attachmentCount ) values (?,?,?,?,?,?,?,?,?)")
 	m, err := mailparse.ReadMailFromRaw(&data)
@@ -50,5 +55,11 @@ func mailHandler(origin net.Addr, from string, to []string, data []byte) error {
 		aCnt,
 	)
 	stmt.Close()
+	c := atomic.AddUint32(&count, 1)
+	if (c > 10) {
+		atomic.StoreUint32(&count, 0)
+		dblink.Db.Exec("delete from Message where id not in (select id from Message order by receivedDate desc limit 1000 )")
+	}
+	
 	return err
 }
