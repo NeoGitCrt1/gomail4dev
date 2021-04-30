@@ -40,12 +40,14 @@ func mailHandler(origin net.Addr, from string, to []string, data []byte) error {
 	stmt, err := dblink.Db().Prepare("INSERT INTO Message ( id, [from], [to], subject,receivedDate, data, isUnread, mimeParseError, attachmentCount ) values (?,?,?,?,?,?,?,?,?)")
 	m, err:= mailparse.ReadMailFromRaw(&data)
 	aCnt  := 0
+	mimeParseError := ""
 	if (err != nil) {
-		aCnt = len(*m.Parts) - 1
+		mimeParseError = err.Error()
 	}
+	aCnt = len(*m.Parts) - 1
 	stmt.Exec(strconv.FormatUint(snowflake.ID(), 10), from, strings.Join(to, ","), m.Subject,
 		time.Now(),
-		data, 0,aCnt, err.Error(),
+		data, 0,aCnt, mimeParseError,
 	)
 	stmt.Close()
 	return err
