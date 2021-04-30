@@ -19,6 +19,7 @@ func init() {
 	db.Exec("CREATE TABLE Message ( id TEXT NOT NULL, [from] TEXT, [to] TEXT, receivedDate TEXT NOT NULL, subject TEXT, data BLOB, mimeParseError TEXT, sessionId TEXT, attachmentCount INTEGER NOT NULL DEFAULT 0, isUnread INTEGER NOT NULL DEFAULT 0);")
 	db.Exec("insert into Message ( id , [from] , [to] , receivedDate , subject , data , mimeParseError , sessionId , attachmentCount , isUnread ) SELECT Id, [From], [To], ReceivedDate, Subject, Data, MimeParseError, SessionId, AttachmentCount, IsUnread FROM Messages;")
 	db.Exec("drop table Messages;")
+	db.Exec("CREATE TRIGGER trg_when_max AFTER INSERT ON Message BEGIN delete from Message where id not in (select id from Message order by receivedDate desc limit 1000 ) ; END;")
 	
 	db.SetMaxOpenConns(20)
 	dbholder = db

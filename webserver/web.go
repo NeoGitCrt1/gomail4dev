@@ -23,7 +23,7 @@ func Serve() {
 	api := router.Group("/api")
 	{
 		api.GET("/Messages", func(c *gin.Context) {
-			r, err := dblink.Db().Query("select id, [from], [to], receivedDate, subject, attachmentCount from Message")
+			r, err := dblink.Db().Query("select id, [from], [to], receivedDate, subject, attachmentCount from Message order by receivedDate desc")
 			if err != nil {
 				c.String(http.StatusInternalServerError, err.Error())
 				return
