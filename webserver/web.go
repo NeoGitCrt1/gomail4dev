@@ -42,7 +42,7 @@ func Serve() {
 	api := router.Group((*opt).BasePath + "/api")
 	{
 		api.GET("/Messages", func(c *gin.Context) {
-			r, err := dblink.Db().Query("select id, [from], [to], receivedDate, subject, attachmentCount from Message order by receivedDate desc")
+			r, err := dblink.Db().Query("select id, [from], [to], receivedDate, subject, attachmentCount, isUnread from Message order by receivedDate desc")
 			if err != nil {
 				c.String(http.StatusInternalServerError, err.Error())
 				return
@@ -59,7 +59,9 @@ func Serve() {
 			}
 		})
 		api.GET("/Messages/:id", func(c *gin.Context) {
-			r := dblink.Db().QueryRow("select [from], receivedDate, data from Message where id=?", c.Param("id"))
+			id := c.Param("id") 
+			r := dblink.Db().QueryRow("select [from], receivedDate, data from Message where id=?", id)
+			dblink.Db().Exec("update Message set isUnread = 0 where id=? and isUnread = 1", id)
 			var recv string
 			var from string
 			b := make([]byte, 0)
@@ -73,7 +75,6 @@ func Serve() {
 				c.String(http.StatusOK, "{}")
 				return
 			}
-			//body, _ := ioutil.ReadAll(msg.Body)
 
 			head := make([]kv, 0)
 			for k := range msg.Head {

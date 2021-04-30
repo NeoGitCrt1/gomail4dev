@@ -46,7 +46,7 @@ func mailHandler(origin net.Addr, from string, to []string, data []byte) error {
 	aCnt = len(*m.Parts) - 1
 	stmt.Exec(strconv.FormatUint(snowflake.ID(), 10), from, strings.Join(to, ","), m.Subject,
 		time.Now(),
-		data, 0, mimeParseError,
+		data, 1, mimeParseError,
 		aCnt,
 	)
 	stmt.Close()

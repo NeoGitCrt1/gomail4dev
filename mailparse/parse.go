@@ -65,7 +65,7 @@ func ReadMail(r io.Reader) (m *Mail, err error) {
 				continue
 			}
 
-			parts = append(parts, &Part{mediaType, strings.ToUpper(msg.Header.Get(Enc)), &partData, !(mediaType == "text/plain" || mediaType == "text/html")})
+			parts = append(parts, &Part{mediaType, strings.ToUpper(newPart.Header.Get(Enc)), &partData, !(mediaType == "text/plain" || mediaType == "text/html")})
 		}
 	}
 
