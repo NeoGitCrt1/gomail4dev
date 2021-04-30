@@ -6,11 +6,11 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-var dbholder *sql.DB
+var Db *sql.DB
 
 var DbData string
 
-func init() {
+func InitDb() {
 	db, err := sql.Open("sqlite3", DbData)
 	if err != nil {
 		panic(err)
@@ -22,9 +22,5 @@ func init() {
 	db.Exec("CREATE TRIGGER trg_when_max AFTER INSERT ON Message BEGIN delete from Message where id not in (select id from Message order by receivedDate desc limit 1000 ) ; END;")
 
 	db.SetMaxOpenConns(20)
-	dbholder = db
-}
-
-func Db() *sql.DB {
-	return dbholder
+	Db = db
 }

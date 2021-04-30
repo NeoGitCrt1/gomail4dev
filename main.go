@@ -19,6 +19,7 @@ func main() {
 	flag.StringVar(&dblink.DbData, "data_path", "./data.db", "data file path")
 	flag.Parse()
 	
+	dblink.InitDb()
 	go mailserver.Serve()
 	go webserver.Serve()
 

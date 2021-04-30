@@ -46,7 +46,7 @@ func Serve() {
 	api := router.Group((*opt).BasePath + "/api")
 	{
 		api.GET("/Messages", func(c *gin.Context) {
-			r, err := dblink.Db().Query("select id, [from], [to], receivedDate, subject, attachmentCount, isUnread from Message order by receivedDate desc")
+			r, err := dblink.Db.Query("select id, [from], [to], receivedDate, subject, attachmentCount, isUnread from Message order by receivedDate desc")
 			if err != nil {
 				c.String(http.StatusInternalServerError, err.Error())
 				return
@@ -57,15 +57,15 @@ func Serve() {
 		api.DELETE("/Messages/:id", func(c *gin.Context) {
 			id := c.Param("id")
 			if id == "*" {
-				dblink.Db().Exec("delete from Message", id)
+				dblink.Db.Exec("delete from Message", id)
 			} else {
-				dblink.Db().Exec("delete from Message where id=?", id)
+				dblink.Db.Exec("delete from Message where id=?", id)
 			}
 		})
 		api.GET("/Messages/:id", func(c *gin.Context) {
 			id := c.Param("id")
-			r := dblink.Db().QueryRow("select [from], receivedDate, data from Message where id=?", id)
-			dblink.Db().Exec("update Message set isUnread = 0 where id=? and isUnread = 1", id)
+			r := dblink.Db.QueryRow("select [from], receivedDate, data from Message where id=?", id)
+			dblink.Db.Exec("update Message set isUnread = 0 where id=? and isUnread = 1", id)
 			var recv string
 			var from string
 			b := make([]byte, 0)
@@ -95,7 +95,7 @@ func Serve() {
 			})
 		})
 		api.GET("/Messages/:id/html", func(c *gin.Context) {
-			r := dblink.Db().QueryRow("select data from Message where id=?", c.Param("id"))
+			r := dblink.Db.QueryRow("select data from Message where id=?", c.Param("id"))
 			b := make([]byte, 0)
 			err := r.Scan(&b)
 			if err != nil {
@@ -112,7 +112,7 @@ func Serve() {
 
 		})
 		api.GET("/Messages/:id/raw", func(c *gin.Context) {
-			r := dblink.Db().QueryRow("select data from Message where id=?", c.Param("id"))
+			r := dblink.Db.QueryRow("select data from Message where id=?", c.Param("id"))
 			b := make([]byte, 0)
 			err := r.Scan(&b)
 			if err != nil {
@@ -128,7 +128,7 @@ func Serve() {
 
 		})
 		api.GET("/Messages/:id/download", func(c *gin.Context) {
-			r := dblink.Db().QueryRow("select data from Message where id=?", c.Param("id"))
+			r := dblink.Db.QueryRow("select data from Message where id=?", c.Param("id"))
 			b := make([]byte, 0)
 			err := r.Scan(&b)
 			if err != nil {

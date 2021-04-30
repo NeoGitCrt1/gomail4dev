@@ -36,7 +36,7 @@ func Serve() {
 	smtpd.ListenAndServe(":"+strconv.Itoa(MPort), mailHandler, "gomail", "")
 }
 func mailHandler(origin net.Addr, from string, to []string, data []byte) error {
-	stmt, err := dblink.Db().Prepare("INSERT INTO Message ( id, [from], [to], subject,receivedDate, data, isUnread, mimeParseError, attachmentCount ) values (?,?,?,?,?,?,?,?,?)")
+	stmt, err := dblink.Db.Prepare("INSERT INTO Message ( id, [from], [to], subject,receivedDate, data, isUnread, mimeParseError, attachmentCount ) values (?,?,?,?,?,?,?,?,?)")
 	m, err := mailparse.ReadMailFromRaw(&data)
 	aCnt := 0
 	mimeParseError := ""
