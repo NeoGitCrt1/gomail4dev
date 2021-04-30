@@ -80,7 +80,7 @@ func Serve() {
 			}
 			msg, err := mailparse.ReadMailFromRaw(&b)
 
-			c.String(http.StatusOK, msg.TextBody())
+			c.String(http.StatusOK, "<pre>%s</pre>", msg.TextBody())
 
 		})
 		api.GET("/Messages/:id/raw", func(c *gin.Context) {
