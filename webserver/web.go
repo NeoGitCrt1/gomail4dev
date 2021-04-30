@@ -2,7 +2,6 @@ package webserver
 
 import (
 	"bytes"
-	"flag"
 	"net/http"
 	"strconv"
 	"strings"
@@ -21,13 +20,13 @@ type ServerOptions struct {
 
 var opt *ServerOptions
 
-var b = flag.String("base_path", "/", "base url part")
-var wPort = flag.Int("web_port", 5000, "web site port")
+var BasePath string
+var WPort int
 
 func init() {
 	opt = &ServerOptions{
-		*b,
-		*wPort,
+		BasePath,
+		WPort,
 	}
 }
 

@@ -2,17 +2,16 @@ package dblink
 
 import (
 	"database/sql"
-	"flag"
 
 	_ "github.com/mattn/go-sqlite3"
 )
 
 var dbholder *sql.DB
 
-var dbData = flag.String("data_path", "./data.db", "data file path")
+var DbData string
 
 func init() {
-	db, err := sql.Open("sqlite3", *dbData)
+	db, err := sql.Open("sqlite3", DbData)
 	if err != nil {
 		panic(err)
 	}
