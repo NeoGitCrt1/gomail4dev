@@ -3,6 +3,7 @@ package webserver
 import (
 	"bytes"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/NeoGitCrt1/gomail4dev/dblink"
@@ -12,15 +13,33 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+type ServerOptions struct {
+	BasePath string `json:"smtpServer"`
+	Port     int    `json:"smtpPort"`
+}
+
+var opt *ServerOptions
+
+func init() {
+	opt = &ServerOptions{
+		"",
+		5000,
+	}
+}
+
 func Serve() {
 	router := gin.Default()
-	router.StaticFile("/", "./wwwroot/index.html")
-	router.Static("/js", "./wwwroot/js")
-	router.Static("/css", "./wwwroot/css")
-	router.Static("/fonts", "./wwwroot/fonts")
-	router.StaticFile("/logo.png", "./wwwroot/logo.png")
 
-	api := router.Group("/api")
+	static := router.Group((*opt).BasePath + "/") 
+	{
+		static.StaticFile("/", "./wwwroot/index.html")
+		static.Static("/js", "./wwwroot/js")
+		static.Static("/css", "./wwwroot/css")
+		static.Static("/fonts", "./wwwroot/fonts")
+		static.StaticFile("/logo.png", "./wwwroot/logo.png")
+	}
+
+	api := router.Group((*opt).BasePath + "/api")
 	{
 		api.GET("/Messages", func(c *gin.Context) {
 			r, err := dblink.Db().Query("select id, [from], [to], receivedDate, subject, attachmentCount from Message order by receivedDate desc")
@@ -124,7 +143,7 @@ func Serve() {
 
 	}
 
-	router.Run(":5000")
+	router.Run(":" + strconv.Itoa((*opt).Port))
 
 }
 

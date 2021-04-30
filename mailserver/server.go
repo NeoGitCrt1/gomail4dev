@@ -14,7 +14,6 @@ import (
 )
 
 type ServerRelayOptions struct {
-	BasePath        string
 	SmtpServer      string   `json:"smtpServer"`
 	SmtpPort        int      `json:"smtpPort"`
 	AutomaticEmails []string `json:"automaticEmails"`
