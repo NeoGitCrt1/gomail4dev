@@ -56,7 +56,7 @@ func mailHandler(origin net.Addr, from string, to []string, data []byte) error {
 	)
 	stmt.Close()
 	c := atomic.AddUint32(&count, 1)
-	if (c > 10) {
+	if (c == 11) {
 		atomic.StoreUint32(&count, 0)
 		dblink.Db.Exec("delete from Message where id not in (select id from Message order by receivedDate desc limit 1000 )")
 	}
