@@ -2,9 +2,7 @@ package main
 
 import (
 	"flag"
-	"os"
-	"os/signal"
-	"syscall"
+	"sync"
 
 	"github.com/NeoGitCrt1/gomail4dev/dblink"
 	"github.com/NeoGitCrt1/gomail4dev/mailserver"
@@ -18,13 +16,13 @@ func main() {
 	flag.IntVar(&webserver.WPort, "web_port", 5000, "web site port")
 	flag.StringVar(&dblink.DbData, "data_path", "./data.db", "data file path")
 	flag.Parse()
-	
-	dblink.InitDb()
-	go mailserver.Serve()
-	go webserver.Serve()
 
-	c := make(chan os.Signal)
-	signal.Notify(c, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
-	<-c
-	os.Exit(0)
+	dblink.InitDb()
+	wg := sync.WaitGroup{}
+	wg.Add(2)
+
+	go mailserver.Serve(&wg)
+	go webserver.Serve(&wg)
+
+	wg.Wait()
 }

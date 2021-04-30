@@ -10,6 +10,7 @@ import (
 
 // https://github.com/kirabou/parseMIMEemail.go
 type Mail struct {
+	Recv string
 	To string
 	From string
 	Subject string

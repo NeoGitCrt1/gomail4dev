@@ -2,9 +2,17 @@ package webserver
 
 import (
 	"bytes"
+	"context"
+	"errors"
+	"log"
 	"net/http"
+	"os"
+	"os/signal"
 	"strconv"
 	"strings"
+	"sync"
+	"syscall"
+	"time"
 
 	"github.com/NeoGitCrt1/gomail4dev/dblink"
 	"github.com/NeoGitCrt1/gomail4dev/mailparse"
@@ -24,14 +32,15 @@ var BasePath string
 var WPort int
 
 func init() {
-	
+
 }
 
-func Serve() {
+func Serve(wg *sync.WaitGroup) {
 	opt = &ServerOptions{
 		BasePath,
 		WPort,
 	}
+
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.Default()
 
@@ -80,18 +89,20 @@ func Serve() {
 				c.String(http.StatusOK, "{}")
 				return
 			}
-
+			msg.From = from
+			msg.Recv = recv
 			head := make([]kv, 0)
 			for k := range msg.Head {
 				head = append(head, kv{k, msg.Head[k][0]})
 			}
 
-			c.JSON(http.StatusOK, gin.H{"headers": head,
+			c.JSON(http.StatusOK, gin.H{
+				"headers":          head,
 				"subject":          msg.Subject,
 				"to":               msg.To,
-				"from":             from,
+				"from":             msg.From,
 				"id":               c.Param("id"),
-				"receivedDate":     recv,
+				"receivedDate":     msg.Recv,
 				"secureConnection": "false",
 			})
 		})
@@ -104,6 +115,7 @@ func Serve() {
 				return
 			}
 			msg, err := mailparse.ReadMailFromRaw(&b)
+			
 			con, isPlain := msg.TextBody()
 			if isPlain {
 				c.String(http.StatusOK, "<pre>%s</pre>", con)
@@ -153,7 +165,34 @@ func Serve() {
 
 	}
 
-	router.Run(":" + strconv.Itoa((*opt).Port))
+	srv := &http.Server{
+		Addr:    ":" + strconv.Itoa((*opt).Port),
+		Handler: router,
+	}
+
+	go func() {
+		if err := srv.ListenAndServe(); err != nil && errors.Is(err, http.ErrServerClosed) {
+			log.Printf("listen: %s\n", err)
+		}
+	}()
+
+	quit := make(chan os.Signal)
+	// kill (no param) default send syscall.SIGTERM
+	// kill -2 is syscall.SIGINT
+	// kill -9 is syscall.SIGKILL but can't be catch, so don't need add it
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+	log.Println("Shutting down server...")
+
+	// The context is used to inform the server it has 5 seconds to finish
+	// the request it is currently handling
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err := srv.Shutdown(ctx); err != nil {
+		log.Fatal("Server forced to shutdown:", err)
+	}
+	wg.Done()
 
 }
 
