@@ -2,12 +2,11 @@ package webserver
 
 import (
 	"bytes"
-	"io/ioutil"
 	"net/http"
-	m "net/mail"
 	"strings"
 
 	"github.com/NeoGitCrt1/gomail4dev/dblink"
+	"github.com/NeoGitCrt1/gomail4dev/mailparse"
 	"github.com/NeoGitCrt1/gomail4dev/mailserver"
 	"github.com/bdwilliams/go-jsonify/jsonify"
 	"github.com/gin-gonic/gin"
@@ -24,7 +23,7 @@ func Serve() {
 	api := router.Group("/api")
 	{
 		api.GET("/Messages", func(c *gin.Context) {
-			r, err := dblink.Db().Query("select id, [from], [to], receivedDate, subject from Message")
+			r, err := dblink.Db().Query("select id, [from], [to], receivedDate, subject, attachmentCount from Message")
 			if err != nil {
 				c.String(http.StatusInternalServerError, err.Error())
 				return
@@ -50,7 +49,7 @@ func Serve() {
 				c.String(http.StatusOK, "{}")
 				return
 			}
-			msg, err := m.ReadMessage(bytes.NewReader(b))
+			msg, err := mailparse.ReadMailFromRaw(&b)
 			if err != nil {
 				c.String(http.StatusOK, "{}")
 				return
@@ -58,13 +57,13 @@ func Serve() {
 			//body, _ := ioutil.ReadAll(msg.Body)
 
 			head := make([]kv, 0)
-			for k := range msg.Header {
-				head = append(head, kv{k, msg.Header[k][0]})
+			for k := range msg.Head {
+				head = append(head, kv{k, msg.Head[k][0]})
 			}
 
 			c.JSON(http.StatusOK, gin.H{"headers": head,
-				"subject":          msg.Header.Get("Subject"),
-				"to":               msg.Header.Get("To"),
+				"subject":          msg.Subject,
+				"to":               msg.To,
 				"from":             from,
 				"id":               c.Param("id"),
 				"receivedDate":     recv,
@@ -79,9 +78,9 @@ func Serve() {
 				c.String(http.StatusOK, "{}")
 				return
 			}
-			msg, err := m.ReadMessage(bytes.NewReader(b))
-			body, _ := ioutil.ReadAll(msg.Body)
-			c.String(http.StatusOK, "<pre>%s</pre>", string(body))
+			msg, err := mailparse.ReadMailFromRaw(&b)
+
+			c.String(http.StatusOK, msg.TextBody())
 
 		})
 		api.GET("/Messages/:id/raw", func(c *gin.Context) {
@@ -105,7 +104,7 @@ func Serve() {
 			b := make([]byte, 0)
 			err := r.Scan(&b)
 			if err != nil {
-				c.String(http.StatusOK, "{}")
+				c.String(http.StatusOK, "%s", err.Error())
 				return
 			}
 			//			body, _ := ioutil.ReadAll(msg.Body)
@@ -113,7 +112,7 @@ func Serve() {
 				int64(len(b)),
 				"application/octet-stream",
 				bytes.NewReader(b),
-				map[string]string{"Content-Disposition": "attachment;filename=issues.eml"},
+				map[string]string{"Content-Disposition": "attachment;filename=" + c.Param("id") + ".eml"},
 			)
 
 		})
