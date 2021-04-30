@@ -24,14 +24,14 @@ type Part struct {
 	isAttach bool
 }
 
-func (m *Mail) TextBody() string {
+func (m *Mail) TextBody() (string , bool){
 	for k := range *m.Parts {
 		p := (*m.Parts)[k]
 		if (!p.isAttach) {
-			return p.ContentString()
+			return p.ContentString() , p.ContentType == "text/plain"
 		}
 	}
-	return ""
+	return "" , true
 }
 
 

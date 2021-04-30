@@ -30,7 +30,7 @@ func init() {
 func Serve() {
 	router := gin.Default()
 
-	static := router.Group((*opt).BasePath + "/") 
+	static := router.Group((*opt).BasePath + "/")
 	{
 		static.StaticFile("/", "./wwwroot/index.html")
 		static.Static("/js", "./wwwroot/js")
@@ -98,8 +98,12 @@ func Serve() {
 				return
 			}
 			msg, err := mailparse.ReadMailFromRaw(&b)
-
-			c.String(http.StatusOK, "<pre>%s</pre>", msg.TextBody())
+			con, isPlain := msg.TextBody()
+			if isPlain {
+				c.String(http.StatusOK, "<pre>%s</pre>", con)
+			} else {
+				c.String(http.StatusOK, con)
+			}
 
 		})
 		api.GET("/Messages/:id/raw", func(c *gin.Context) {
