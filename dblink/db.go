@@ -40,10 +40,7 @@ func InitDb() {
 		stmt, e := db.Prepare("INSERT INTO Message ( id, [from], [to], subject,receivedDate, data, isUnread, mimeParseError, attachmentCount ) values (?,?,?,?,?,?,?,?,?)")
 		snowflake.SetStartTime(time.Date(2000, 1,1, 1,1,1,1,time.Now().Location()))
 		for x.Next() && e == nil {
-			e := x.Scan(&from, &to, &recv, &subj, &data, &pErr, &seId, &aCnt, &unread)
-			if e != nil {
-				break
-			}
+			x.Scan(&from, &to, &recv, &subj, &data, &pErr, &seId, &aCnt, &unread)
 			stmt.Exec(strconv.FormatUint(snowflake.ID(), 10),
 				from, to, subj,
 				recv,
