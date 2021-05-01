@@ -29,19 +29,19 @@ type ServerOptions struct {
 
 var opt *ServerOptions
 
-var BasePath string
-var WPort int
+var basePath string
+var port int
 
 func init() {
-	flag.StringVar(&BasePath, "base_path", "/", "base url part")
-	flag.IntVar(&WPort, "web_port", 5000, "web site port")
+	flag.StringVar(&basePath, "base_path", "/", "base url part")
+	flag.IntVar(&port, "web_port", 5000, "web site port")
 }
 
 func Serve(wg *sync.WaitGroup) {
 	defer wg.Done()
 	opt = &ServerOptions{
-		BasePath,
-		WPort,
+		basePath,
+		port,
 	}
 
 	gin.SetMode(gin.ReleaseMode)

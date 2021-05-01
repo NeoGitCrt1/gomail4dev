@@ -31,20 +31,23 @@ type ServerRelayOptions struct {
 }
 
 var ServerOptions *ServerRelayOptions
-
+var cleanSql string
 func init() {
-	flag.IntVar(&MPort, "smtp_port", 25, "smtp server port")
+	flag.IntVar(&port, "smtp_port", 25, "smtp server port")
+	flag.IntVar(&maxRecord, "smtp_max", 1000, "smtp max record")
 }
 
-var MPort int
+var port int
+var maxRecord int
 
 func Serve(wg *sync.WaitGroup) {
 	defer wg.Done()
 	ServerOptions = &ServerRelayOptions{
 		SmtpServer: "localhost",
-		SmtpPort:   MPort,
+		SmtpPort:   port,
 	}
-	srv := &smtpd.Server{Addr: ":" + strconv.Itoa(MPort), Handler: mailHandler, Appname: "gomail", Hostname: ""}
+	cleanSql = "delete from Message where id < (select id from Message order by receivedDate desc limit "+ strconv.Itoa(maxRecord) + ", 1 )"
+	srv := &smtpd.Server{Addr: ":" + strconv.Itoa(port), Handler: mailHandler, Appname: "gomail", Hostname: ""}
 	go func() {
 		if err := srv.ListenAndServe(); err != nil && errors.Is(err, smtpd.ErrServerClosed) {
 			log.Printf("listen: %s\n", err)
@@ -71,28 +74,26 @@ func Serve(wg *sync.WaitGroup) {
 
 var count uint32
 
-func mailHandler(origin net.Addr, from string, to []string, data []byte) error {
+func mailHandler(origin net.Addr, from string, to []string, data []byte) (err error) {
 	stmt, err := dblink.Db.Prepare("INSERT INTO Message ( id, [from], [to], subject,receivedDate, data, isUnread, mimeParseError, attachmentCount ) values (?,?,?,?,?,?,?,?,?)")
 	m, err := mailparse.ReadMailFromRaw(&data)
 	aCnt := 0
 	mimeParseError := ""
 	if err != nil {
 		mimeParseError = err.Error()
-	}
+	} 
 	aCnt = len(*m.Parts) - 1
-	stmt.Exec(strconv.FormatUint(snowflake.ID(), 10), from, strings.Join(to, ","), m.Subject,
+	_ , err = stmt.Exec(strconv.FormatUint(snowflake.ID(), 10), from, strings.Join(to, ","), m.Subject,
 		time.Now(),
 		data, 1, mimeParseError,
 		aCnt,
 	)
 	stmt.Close()
-	// not for high traffic scenario
+	
 	c := atomic.AddUint32(&count, 1)
 	if c == 11 {
+		dblink.Db.Exec(cleanSql)
 		atomic.StoreUint32(&count, 0)
-		// I konw this delete sucks. I have old data with UUID as id, so I have to do this in this way
-		dblink.Db.Exec("delete from Message where id not in (select id from Message order by receivedDate desc limit 1000 )")
 	}
-
-	return err
+	return
 }
