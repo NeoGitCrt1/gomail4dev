@@ -3,6 +3,7 @@ package mailserver
 import (
 	"context"
 	"errors"
+	"flag"
 	"log"
 	"net"
 	"os"
@@ -32,12 +33,13 @@ type ServerRelayOptions struct {
 var ServerOptions *ServerRelayOptions
 
 func init() {
-
+	flag.IntVar(&MPort, "smtp_port", 25, "smtp server port")
 }
 
 var MPort int
 
 func Serve(wg *sync.WaitGroup) {
+	defer wg.Done()
 	ServerOptions = &ServerRelayOptions{
 		SmtpServer: "localhost",
 		SmtpPort:   MPort,
@@ -64,7 +66,7 @@ func Serve(wg *sync.WaitGroup) {
 	if err := srv.Shutdown(ctx); err != nil {
 		log.Fatal("Server forced to shutdown:", err)
 	}
-	wg.Done()
+
 }
 
 var count uint32

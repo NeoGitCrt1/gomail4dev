@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"flag"
 	"log"
 	"net/http"
 	"os"
@@ -32,17 +33,19 @@ var BasePath string
 var WPort int
 
 func init() {
-
+	flag.StringVar(&BasePath, "base_path", "/", "base url part")
+	flag.IntVar(&WPort, "web_port", 5000, "web site port")
 }
 
 func Serve(wg *sync.WaitGroup) {
+	defer wg.Done()
 	opt = &ServerOptions{
 		BasePath,
 		WPort,
 	}
 
 	gin.SetMode(gin.ReleaseMode)
-	router := gin.Default()
+	router := gin.New()
 
 	static := router.Group((*opt).BasePath + "/")
 	{
@@ -115,7 +118,9 @@ func Serve(wg *sync.WaitGroup) {
 				return
 			}
 			msg, err := mailparse.ReadMailFromRaw(&b)
-			
+			// for i := range *(msg.Parts) {
+			// 	(*(msg.Parts) )[i].ContentType
+			// }
 			con, isPlain := msg.TextBody()
 			if isPlain {
 				c.String(http.StatusOK, "<pre>%s</pre>", con)
@@ -192,7 +197,6 @@ func Serve(wg *sync.WaitGroup) {
 	if err := srv.Shutdown(ctx); err != nil {
 		log.Fatal("Server forced to shutdown:", err)
 	}
-	wg.Done()
 
 }
 
