@@ -46,7 +46,7 @@ func Serve(wg *sync.WaitGroup) {
 		SmtpServer: "localhost",
 		SmtpPort:   port,
 	}
-	cleanSql = "delete from Message where id < (select id from Message order by receivedDate desc limit "+ strconv.Itoa(maxRecord) + ", 1 )"
+	cleanSql = "delete from Message where id < (select id from Message order by id desc limit "+ strconv.Itoa(maxRecord) + ", 1 )"
 	srv := &smtpd.Server{Addr: ":" + strconv.Itoa(port), Handler: mailHandler, Appname: "gomail", Hostname: ""}
 	go func() {
 		if err := srv.ListenAndServe(); err != nil && errors.Is(err, smtpd.ErrServerClosed) {
@@ -83,7 +83,7 @@ func mailHandler(origin net.Addr, from string, to []string, data []byte) (err er
 		mimeParseError = err.Error()
 	} 
 	aCnt = len(*m.Parts) - 1
-	_ , err = stmt.Exec(strconv.FormatUint(snowflake.ID(), 10), from, strings.Join(to, ","), m.Subject,
+	_ , err = stmt.Exec(snowflake.ID(), from, strings.Join(to, ","), m.Subject,
 		time.Now(),
 		data, 1, mimeParseError,
 		aCnt,

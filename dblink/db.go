@@ -22,9 +22,10 @@ func InitDb() {
 	if err != nil {
 		panic(err)
 	}
+	snowflake.SetStartTime(time.Date(2021,1,1,1,1,1,1,time.Now().Location()))
 
-	db.Exec("CREATE TABLE Message ( id TEXT NOT NULL, [from] TEXT, [to] TEXT, receivedDate TEXT NOT NULL, subject TEXT, data BLOB, mimeParseError TEXT, sessionId TEXT, attachmentCount INTEGER NOT NULL DEFAULT 0, isUnread INTEGER NOT NULL DEFAULT 1);")
-	// migrate data from Rnoowd.Smtp4dev
+	db.Exec("CREATE TABLE Message ( id INTEGER NOT NULL, [from] TEXT, [to] TEXT, receivedDate TEXT NOT NULL, subject TEXT, data BLOB, mimeParseError TEXT, sessionId TEXT, attachmentCount INTEGER NOT NULL DEFAULT 0, isUnread INTEGER NOT NULL DEFAULT 1);")
+	// migrate data from Rnwood.Smtp4dev
 	x, err := db.Query("SELECT [From], [To], ReceivedDate, Subject, Data, MimeParseError, SessionId, AttachmentCount, IsUnread FROM Messages order by ReceivedDate;")
 
 	if err == nil {
@@ -38,7 +39,6 @@ func InitDb() {
 		var aCnt int
 		var unread int
 		stmt, e := db.Prepare("INSERT INTO Message ( id, [from], [to], subject,receivedDate, data, isUnread, mimeParseError, attachmentCount ) values (?,?,?,?,?,?,?,?,?)")
-		snowflake.SetStartTime(time.Date(2000, 1,1, 1,1,1,1,time.Now().Location()))
 		for x.Next() && e == nil {
 			x.Scan(&from, &to, &recv, &subj, &data, &pErr, &seId, &aCnt, &unread)
 			stmt.Exec(strconv.FormatUint(snowflake.ID(), 10),
@@ -54,7 +54,6 @@ func InitDb() {
 		db.Exec(`ALTER TABLE Messages RENAME TO Messages_arch;`)
 		// db.Exec("insert into Message ( id , [from] , [to] , receivedDate , subject , data , mimeParseError , sessionId , attachmentCount , isUnread ) SELECT Id, [From], [To], ReceivedDate, Subject, Data, MimeParseError, SessionId, AttachmentCount, IsUnread FROM Messages;")
 	}
-	snowflake.SetStartTime(time.Date(2021,1,1,1,1,1,1,time.Now().Location()))
 	db.SetMaxOpenConns(5)
 	Db = db
 }
