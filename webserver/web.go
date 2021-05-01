@@ -57,7 +57,7 @@ func Serve(wg *sync.WaitGroup) {
 		api := base.Group("/api")
 		{
 			api.GET("/Messages", func(c *gin.Context) {
-				r, err := dblink.Db.Query("select cast(id as text), [from], [to], receivedDate, subject, attachmentCount, isUnread from Message order by receivedDate desc")
+				r, err := dblink.Db.Query("select cast(id as text) id, [from], [to], receivedDate, subject, attachmentCount, isUnread from Message order by receivedDate desc")
 				if err != nil {
 					c.String(http.StatusInternalServerError, err.Error())
 					return
