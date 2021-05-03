@@ -26,7 +26,7 @@ func InitDb() {
 
 	db.Exec("CREATE TABLE Message ( id INTEGER NOT NULL, [from] TEXT, [to] TEXT, receivedDate TEXT NOT NULL, subject TEXT, data BLOB, mimeParseError TEXT, sessionId TEXT, attachmentCount INTEGER NOT NULL DEFAULT 0, isUnread INTEGER NOT NULL DEFAULT 1);")
 	// migrate data from Rnwood.Smtp4dev
-	x, err := db.Query("SELECT [From], [To], ReceivedDate, Subject, Data, MimeParseError, SessionId, AttachmentCount, IsUnread FROM Messages order by ReceivedDate;")
+	x, err := db.Query("SELECT [From], [To], ReceivedDate, Subject, Data, SessionId, AttachmentCount, IsUnread, MimeParseError FROM Messages order by ReceivedDate;")
 
 	if err == nil {
 		var from string
@@ -40,7 +40,7 @@ func InitDb() {
 		var unread int
 		stmt, e := db.Prepare("INSERT INTO Message ( id, [from], [to], subject,receivedDate, data, isUnread, mimeParseError, attachmentCount ) values (?,?,?,?,?,?,?,?,?)")
 		for x.Next() && e == nil {
-			x.Scan(&from, &to, &recv, &subj, &data, &pErr, &seId, &aCnt, &unread)
+			x.Scan(&from, &to, &recv, &subj, &data, &seId, &aCnt, &unread, &pErr)
 			stmt.Exec(strconv.FormatUint(snowflake.ID(), 10),
 				from, to, subj,
 				recv,
