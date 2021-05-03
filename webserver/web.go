@@ -20,6 +20,8 @@ import (
 	"github.com/NeoGitCrt1/gomail4dev/mailserver"
 	"github.com/bdwilliams/go-jsonify/jsonify"
 	"github.com/gin-gonic/gin"
+
+	"github.com/DeanThompson/ginpprof"
 )
 
 type ServerOptions struct {
@@ -169,6 +171,7 @@ func Serve(wg *sync.WaitGroup) {
 		}
 	}
 
+	ginpprof.Wrap(router)
 
 	srv := &http.Server{
 		Addr:    ":" + strconv.Itoa((*opt).Port),
